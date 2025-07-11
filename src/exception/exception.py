@@ -1,5 +1,5 @@
 import sys
-from regimeforecasting.logging import logger
+from src.logger import logger
 
 class RegimeForecastingException(Exception):
     def __init__(self,error_message,error_details:sys):

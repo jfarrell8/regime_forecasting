@@ -1,6 +1,6 @@
 from datetime import datetime
 import os
-from regimeforecasting.constant import training_pipeline
+from src.constant import training_pipeline
 
 class TrainingPipelineConfig:
     def __init__(self,timestamp=datetime.now()):
@@ -13,16 +13,33 @@ class TrainingPipelineConfig:
 
 class DataIngestionConfig:
     def __init__(self,training_pipeline_config:TrainingPipelineConfig):
-        self.data_ingestion_dir:str=os.path.join(
+
+        # ./artifacts/{timestamp}/data_ingestion/
+        self.data_ingestion_dir:str = os.path.join(
             training_pipeline_config.artifact_dir,training_pipeline.DATA_INGESTION_DIR_NAME
         )
-        self.feature_store_file_path: str = os.path.join(
-                self.data_ingestion_dir, training_pipeline.DATA_INGESTION_FEATURE_STORE_DIR, training_pipeline.FILE_NAME
-            )
-        self.training_file_path: str = os.path.join(
-                self.data_ingestion_dir, training_pipeline.DATA_INGESTION_INGESTED_DIR, training_pipeline.TRAIN_FILE_NAME
-            )
-        self.testing_file_path: str = os.path.join(
-                self.data_ingestion_dir, training_pipeline.DATA_INGESTION_INGESTED_DIR, training_pipeline.TEST_FILE_NAME
-            )
-        self.train_test_split_ratio: float = training_pipeline.DATA_INGESTION_TRAIN_TEST_SPLIT_RATIO
+        os.makedirs(self.data_ingestion_dir, exist_ok=True)
+
+        # ./artifacts/{timestamp}/data_ingestion/raw
+        self.raw_ingestion_dir: str = os.path.join(self.data_ingestion_dir, training_pipeline.DATA_INGESTION_RAW_DATA_DIR)
+        os.makedirs(self.raw_ingestion_dir, exist_ok=True)
+
+        # ./artifacts/{timestamp}/data_ingestion/raw/close_prices.csv
+        self.raw_file_path: str = os.path.join(self.raw_ingestion_dir, training_pipeline.DATA_FILE_NAME)
+
+
+class FeatureEngineeringConfig:
+    def __init__(self, training_pipeline_config: TrainingPipelineConfig):
+
+        # ./artifacts/{timestamp}/feature_engineering/
+        self.feature_engineering_dir: str = os.path.join(
+            training_pipeline_config.artifact_dir, training_pipeline.FEATURE_ENG_DIR_NAME
+        )
+        os.makedirs(self.feature_engineering_dir, exist_ok=True)
+
+        # ./artifacts/{timestamp}/feature_engineering/processed
+        self.processed_feature_eng_dir: str = os.path.join(self.feature_engineering_dir, training_pipeline.FEATURE_ENG_DATA_DIR)
+        os.makedirs(self.processed_feature_eng_dir, exist_ok=True)
+
+        # ./artifacts/{timestamp}/feature_engineering/processed/close_prices.csv
+        self.feature_eng_data_path: str = os.path.join(self.processed_feature_eng_dir, training_pipeline.DATA_FILE_NAME)
