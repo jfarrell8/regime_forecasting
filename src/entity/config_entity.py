@@ -43,3 +43,29 @@ class FeatureEngineeringConfig:
 
         # ./artifacts/{timestamp}/feature_engineering/processed/close_prices.csv
         self.feature_eng_data_path: str = os.path.join(self.processed_feature_eng_dir, training_pipeline.DATA_FILE_NAME)
+
+
+class ClusteringConfig:
+    def __init__(self, training_pipeline_config: TrainingPipelineConfig):
+
+        # ./artifacts/{timestamp}/clustering/
+        self.clustering_dir: str = os.path.join(
+            training_pipeline_config.artifact_dir, training_pipeline.CLUSTERING_DIR_NAME
+        )
+        os.makedirs(self.clustering_dir, exist_ok=True)
+
+        # ./artifacts/{timestamp}/clustering/regimes.csv
+        self.regimes_data_path: str = os.path.join(self.clustering_dir, training_pipeline.REGIMES_FILE_NAME)
+
+
+class RegimeModelForecastingConfig:
+    def __init__(self, training_pipeline_config: TrainingPipelineConfig):
+        
+        # ./artifacts/{timestamp}/regime_model_forecasting/
+        self.regime_model_forecasting_dir: str = os.path.join(
+            training_pipeline_config.artifact_dir, training_pipeline.REGIME_MODEL_FORECASTING_DIR_NAME
+        )
+        os.makedirs(self.regime_model_forecasting_dir, exist_ok=True)
+
+        # ./artifacts/{timestamp}/regime_model_forecasting/regime_forecasting.csv
+        self.regime_forecasting_data_path = os.path.join(self.regime_model_forecasting_dir, training_pipeline.REGIME_MODEL_FORECASTING_FILE_NAME)

@@ -1,7 +1,6 @@
 import sys
-from pathlib import Path
 import pandas as pd
-from src.entity.config_entity import FeatureEngineeringConfig, DataIngestionConfig
+from src.entity.config_entity import FeatureEngineeringConfig
 from src.entity.artifact_entity import FeatureEngineeringArtifact, DataIngestionArtifact
 from src.logger.logger import logging
 from src.exception.exception import RegimeForecastingException

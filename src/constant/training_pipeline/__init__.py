@@ -32,3 +32,19 @@ Feature Engineering related constants
 
 FEATURE_ENG_DIR_NAME: str = "feature_engineering"
 FEATURE_ENG_DATA_DIR: str = "processed"
+
+
+"""
+Clustering related constants
+"""
+
+CLUSTERING_DIR_NAME: str = "clustering"
+REGIMES_FILE_NAME: str = "regimes.csv"
+
+
+"""
+Regime model forecasting constants
+"""
+
+REGIME_MODEL_FORECASTING_DIR_NAME: str = "regime_model_forecasting"
+REGIME_MODEL_FORECASTING_FILE_NAME: str = "regime_forecasting.csv"
