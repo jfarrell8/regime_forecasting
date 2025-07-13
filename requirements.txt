@@ -7,5 +7,10 @@ yellowbrick
 scipy
 python-dotenv
 fastapi
+xgboost
+statsmodels
+plotly
+dash
+ta
 
 ##-e .
