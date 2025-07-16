@@ -28,14 +28,6 @@ class FeatureEngineering:
         try:
             logging.info('Saving processed data locally...')
 
-            # current_file = Path(__file__).resolve()
-            # project_root = current_file.parents[2] # up two levels to regimeforecasting/
-
-            # # make path to regimeforecasting/data/raw
-            # raw_data_dir = project_root / 'data' / FEATURE_ENG_DATA_DIR
-            # raw_data_dir.mkdir(parents=True, exist_ok=True)
-
-            # output_path = raw_data_dir / 'close_prices.csv'
             data.to_csv(self.feature_engineering_config.feature_eng_data_path)
 
             logging.info('Processed data saved successfully!')
