@@ -21,10 +21,6 @@ import os
 from dotenv import load_dotenv
 
 
-dagshub.init(repo_owner='jfarrell8',
-             repo_name='regime_forecasting',
-             mlflow=True)
-
 class RegimeModelForecasting:
     def __init__(self, regime_model_forecasting_config: RegimeModelForecastingConfig, 
                  clustering_artifact: ClusteringArtifact):
@@ -34,46 +30,36 @@ class RegimeModelForecasting:
         except Exception as e:
             raise RegimeForecastingException(e, sys)
 
-    def track_mlflow(self, model_name: str, best_model, classificationmetric):
+    def track_mlflow(self, best_model, classificationmetric, model_name):
         """
-        Logs metrics and model to MLflow using DagsHub integration.
-        Assumes MLFLOW_TRACKING_URI, DAGSHUB_USERNAME, and DAGSHUB_TOKEN are defined in a `.env` file.
+        Tracks metrics and model using DagsHub's MLflow integration.
+        Assumes you have valid Git credentials or a DAGSHUB_TOKEN environment variable set.
         """
         try:
-            # Load environment variables from .env
-            load_dotenv()
-
-            # Set MLflow tracking URI and credentials for DagsHub
-            mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI"))
-
-            os.environ["MLFLOW_TRACKING_USERNAME"] = os.getenv("DAGSHUB_USERNAME")
-            os.environ["MLFLOW_TRACKING_PASSWORD"] = os.getenv("DAGSHUB_TOKEN")
-
-            tracking_url_type_store = urlparse(mlflow.get_tracking_uri()).scheme
+            # Automatically sets MLFLOW_TRACKING_URI and credentials
+            dagshub.init(repo_owner='jfarrell8', repo_name='regime_forecasting', mlflow=True)
 
             with mlflow.start_run(run_name=model_name):
-                # Log classification metrics
+                # Log metrics
                 mlflow.log_metric("f1_score", classificationmetric.f1_score)
                 mlflow.log_metric("precision", classificationmetric.precision_score)
                 mlflow.log_metric("recall", classificationmetric.recall_score)
                 mlflow.log_metric("accuracy", classificationmetric.accuracy_score)
 
-                # Log model parameters if available
+                # Log parameters (if available)
                 if hasattr(best_model, "get_params"):
                     mlflow.log_params(best_model.get_params())
 
-                # Log the model and (if possible) register it
-                if tracking_url_type_store != "file":
-                    mlflow.sklearn.log_model(
-                        sk_model=best_model,
-                        artifact_path="model",
-                        registered_model_name=model_name
-                    )
-                else:
-                    mlflow.sklearn.log_model(best_model, "model")
+                # Log and (optionally) register model
+                mlflow.sklearn.log_model(
+                    sk_model=best_model,
+                    artifact_path="model",
+                    registered_model_name=model_name
+                )
 
         except Exception as e:
             raise RegimeForecastingException(e, sys)
+
 
     def add_features(self, data):
         # 1-day lag
