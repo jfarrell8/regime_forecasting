@@ -1,0 +1,15 @@
+artifact_uri: mlflow-artifacts:/182983560799906301/2645f7b56f784dfdae63b01fda6d8328/artifacts
+deleted_time: 1752676964630
+end_time: 1752676675280
+entry_point_name: ''
+experiment_id: '182983560799906301'
+lifecycle_stage: deleted
+run_id: 2645f7b56f784dfdae63b01fda6d8328
+run_name: Random Forest_trial_37
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1752676668186
+status: 3
+tags: []
+user_id: Admin

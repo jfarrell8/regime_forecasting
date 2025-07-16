@@ -6,7 +6,7 @@ from src.entity.artifact_entity import ClusteringArtifact, RegimeModelForecastin
 from src.logger.logger import logging
 from src.exception.exception import RegimeForecastingException
 from sklearn.model_selection import TimeSeriesSplit, RandomizedSearchCV
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from src.utils.utils import get_classification_score, load_object, save_object
@@ -22,6 +22,8 @@ import time
 import subprocess
 import atexit
 import socket
+from sklearn.model_selection import ParameterSampler
+from copy import deepcopy
 
 
 
@@ -53,23 +55,21 @@ class RegimeModelForecasting:
             self.mlflow_proc.terminate()
             print("MLflow tracking server stopped.")
 
-    def track_mlflow(self, best_model, classificationmetric, model_name):
-
+    def track_mlflow(self, model, metrics: dict, params: dict, model_name: str, register: bool = False):
         try:
             self.start_mlflow_server()
             mlflow.set_tracking_uri("http://localhost:5000")
-            mlflow.set_experiment("regime_forecasting")
+            mlflow.set_experiment("regimeforecasting")
 
             with mlflow.start_run(run_name=model_name):
-                # Log metrics
-                mlflow.log_metric("f1_score", classificationmetric.f1_score)
-                mlflow.log_metric("precision", classificationmetric.precision_score)
-                mlflow.log_metric("recall", classificationmetric.recall_score)
-                mlflow.log_metric("accuracy", classificationmetric.accuracy_score)
+                mlflow.log_params(params)
+                for k, v in metrics.items():
+                    mlflow.log_metric(k, v)
 
-                # mlflow.log_artifact(best_model)
-                mlflow.sklearn.log_model(best_model, "model", registered_model_name=model_name)
-
+                if register:
+                    mlflow.sklearn.log_model(model, "model", registered_model_name="RegimeBestModel")
+                else:
+                    mlflow.sklearn.log_model(model, "model")
 
         except Exception as e:
             raise RegimeForecastingException(e, sys)
@@ -109,74 +109,78 @@ class RegimeModelForecasting:
 
         data = data.dropna()
 
-        return data
-    
+        return data    
+
+
     def evaluate_models(self, X_train, y_train, X_test, y_test, models, params):
         try:
             report = {}
+            best_f1 = -1
+            best_model = None
+            best_model_name = None
+            best_params = None
 
-            for i in range(len(list(models))):
-                model = list(models.values())[i]
-                param_grid = params[list(models.keys())[i]]
+            for model_name, model in models.items():
+                param_grid = params[model_name]
+                sampler = list(ParameterSampler(param_grid, n_iter=50, random_state=42))
 
-                tscv = TimeSeriesSplit(n_splits=5)
+                for i, sampled_params in enumerate(sampler):
+                    model.set_params(**sampled_params)
+                    model.fit(X_train, y_train)
+                    y_pred = model.predict(X_test)
 
-                search = RandomizedSearchCV(
-                    estimator=model,
-                    param_distributions=param_grid,
-                    n_iter=50,
-                    scoring='f1_macro', # since we have class imbalance
-                    cv=tscv,
-                    verbose=1,
-                    random_state=42,
-                    n_jobs=-1
-                )
+                    f1 = f1_score(y_test, y_pred, average="macro")
+                    precision = precision_score(y_test, y_pred, average="macro")
+                    recall = recall_score(y_test, y_pred)
+                    accuracy = accuracy_score(y_test, y_pred)
 
-                search.fit(X_train, y_train)
+                    metrics = {
+                        "f1_score": f1,
+                        "precision": precision,
+                        "recall": recall,
+                        "accuracy": accuracy,
+                    }
 
-                model.set_params(**search.best_params_)
-                model.fit(X_train, y_train)
-                
-                y_train_pred = model.predict(X_train)
+                    self.track_mlflow(model, metrics, sampled_params, f"{model_name}_trial_{i}", register=False)
 
-                y_test_pred = model.predict(X_test)
+                    if f1 > best_f1:
+                        best_f1 = f1
+                        best_model = deepcopy(model)
+                        best_model_name = model_name
+                        best_params = sampled_params
 
-                train_model_score = f1_score(y_train, y_train_pred)
+                report[model_name] = best_f1
 
-                test_model_score = f1_score(y_test, y_test_pred)
-
-                report[list(models.keys())[i]] = test_model_score
-
-            return report
+            return report, best_model_name, best_model, best_params
 
         except Exception as e:
-            raise RegimeForecastingException(e, sys)            
+            raise RegimeForecastingException(e, sys)
+
 
     def train_model(self, X_train, y_train, X_test, y_test):
-
         models = {
-                "XGBoost": XGBClassifier(),
-                "Random Forest": RandomForestClassifier(verbose=1),
-                "Logistic Regression": Pipeline([
-                    ('scaler', StandardScaler()),
-                    ('logreg', LogisticRegression(verbose=1))
-                ]),
-            }
-        
-        params={
+            "XGBoost": XGBClassifier(),
+            "Random Forest": RandomForestClassifier(verbose=1),
+            "Logistic Regression": Pipeline([
+                ('scaler', StandardScaler()),
+                ('logreg', LogisticRegression(verbose=1))
+            ]),
+        }
+
+        params = {
             "XGBoost": {
                 "n_estimators": [100, 200, 300],
-                "max_depth": [2, 3, 4, 5],
-                "learning_rate": [0.01, 0.05, 0.1],
-                "subsample": [0.6, 0.8, 1.0],
-                "colsample_bytree": [0.6, 0.8, 1.0],
-                "gamma": [0, 0.1, 1],
-                "reg_alpha": [0, 0.01, 0.1],
-                "reg_lambda": [0.5, 1, 2],
+                # "max_depth": [2, 3, 4, 5],
+                # "learning_rate": [0.01, 0.05, 0.1],
+                # "subsample": [0.6, 0.8, 1.0],
+                # "colsample_bytree": [0.6, 0.8, 1.0],
+                # "gamma": [0, 0.1, 1],
+                # "reg_alpha": [0, 0.01, 0.1],
+                # "reg_lambda": [0.5, 1, 2],
             },
-            "Random Forest":{
-                'criterion':['gini', 'entropy', 'log_loss'],
-                'max_features':['sqrt','log2', None],
+            "Random Forest": {
+                # 'criterion': ['gini', 'entropy', 'log_loss'],
+                # 'max_features': ['sqrt', 'log2', None],
                 'n_estimators': [8, 16, 32, 128, 256]
             },
             "Logistic Regression": {
@@ -186,49 +190,39 @@ class RegimeModelForecasting:
             }
         }
 
+        model_report, best_model_name, best_model, best_params = self.evaluate_models(
+            X_train=X_train, y_train=y_train, X_test=X_test, y_test=y_test,
+            models=models, params=params
+        )
 
-        model_report:dict = self.evaluate_models(X_train=X_train, y_train=y_train, X_test=X_test, 
-                                                 y_test=y_test, models=models, params=params)
-        
-        ## To get best model score from dict
-        best_model_score = max(sorted(model_report.values()))
-
-        ## To get best model name from dict
-        best_model_name = list(model_report.keys())[
-            list(model_report.values()).index(best_model_score)
-        ]
-        best_model = models[best_model_name]
+        # Final training
+        best_model.fit(X_train, y_train)
         y_train_pred = best_model.predict(X_train)
-
-        classification_train_metric = get_classification_score(y_true=y_train, y_pred=y_train_pred)
-        
-        ## Track the experiements with mlflow
-        self.track_mlflow(best_model, classification_train_metric, best_model_name)
-
-
         y_test_pred = best_model.predict(X_test)
-        classification_test_metric=get_classification_score(y_true=y_test,y_pred=y_test_pred)
 
-        self.track_mlflow(best_model, classification_test_metric, best_model_name)
+        train_metric = get_classification_score(y_train, y_train_pred)
+        test_metric = get_classification_score(y_test, y_test_pred)
 
-        # Save training artifact (for traceability)
+        final_metrics = {
+            "train_f1_score": train_metric.f1_score,
+            "test_f1_score": test_metric.f1_score,
+            "test_accuracy": test_metric.accuracy_score
+        }
+
+        # Track and register best model
+        self.track_mlflow(best_model, final_metrics, best_params, f"{best_model_name}_final", register=True)
+
+        # Save locally
         save_object(self.regime_model_forecasting_config.regime_forecasting_data_path, best_model)
-
-        # Save production-ready model for inference
         deployment_model_path = os.path.join("final_model", "model.pkl")
         os.makedirs(os.path.dirname(deployment_model_path), exist_ok=True)
         save_object(deployment_model_path, best_model)
 
-
-        ## Model Trainer Artifact
-        model_trainer_artifact = RegimeModelForecastingArtifact(
-                            regime_forecasting_file_path=self.regime_model_forecasting_config.regime_forecasting_data_path,
-                            train_metric_artifact=classification_train_metric,
-                            test_metric_artifact=classification_test_metric
-                             )
-        logging.info(f"Model trainer artifact: {model_trainer_artifact}")
-
-        return model_trainer_artifact
+        return RegimeModelForecastingArtifact(
+            regime_forecasting_file_path=self.regime_model_forecasting_config.regime_forecasting_data_path,
+            train_metric_artifact=train_metric,
+            test_metric_artifact=test_metric
+        )
 
     def initiate_model_trainer(self)->RegimeModelForecastingArtifact:
         try:
