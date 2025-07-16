@@ -12,5 +12,6 @@ statsmodels
 plotly
 dash
 ta
+dagshub
 
 ##-e .
