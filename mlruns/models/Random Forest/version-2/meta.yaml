@@ -1,0 +1,18 @@
+aliases: []
+creation_timestamp: 1752673903027
+current_stage: None
+deployment_job_state: null
+description: ''
+last_updated_timestamp: 1752673903027
+metrics: null
+model_id: m-a1bc6649c0254f84b9848ec9cdf4ae0b
+name: Random Forest
+params: null
+run_id: 7dbc3021d4684d58a7cef2fc1b81efce
+run_link: ''
+source: models:/m-a1bc6649c0254f84b9848ec9cdf4ae0b
+status: READY
+status_message: null
+storage_location: mlflow-artifacts:/185892638939566639/models/m-a1bc6649c0254f84b9848ec9cdf4ae0b/artifacts
+user_id: null
+version: 2

@@ -15,29 +15,50 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 import mlflow
 from urllib.parse import urlparse
-import dagshub
 import ta
 import os
 from dotenv import load_dotenv
+import time
+import subprocess
+import atexit
+import socket
+
 
 
 class RegimeModelForecasting:
     def __init__(self, regime_model_forecasting_config: RegimeModelForecastingConfig, 
                  clustering_artifact: ClusteringArtifact):
+        self.regime_model_forecasting_config = regime_model_forecasting_config
+        self.clustering_artifact = clustering_artifact
+        self.mlflow_proc = None
+
+    @staticmethod
+    def is_port_open(host, port):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            return s.connect_ex((host, port)) == 0
+
+    def start_mlflow_server(self, port=5000):
         try:
-            self.regime_model_forecasting_config = regime_model_forecasting_config
-            self.clustering_artifact = clustering_artifact
+            if not self.is_port_open("localhost", 5000):
+                cmd = f"start cmd /k mlflow ui --backend-store-uri ./mlruns --port {port}"
+                subprocess.Popen(cmd, shell=True)
+
+            time.sleep(3)  # Give server time to start
+
         except Exception as e:
             raise RegimeForecastingException(e, sys)
 
+    def shutdown_mlflow_server(self):
+        if self.mlflow_proc:
+            self.mlflow_proc.terminate()
+            print("MLflow tracking server stopped.")
+
     def track_mlflow(self, best_model, classificationmetric, model_name):
-        """
-        Tracks metrics and model using DagsHub's MLflow integration.
-        Assumes you have valid Git credentials or a DAGSHUB_TOKEN environment variable set.
-        """
+
         try:
-            # Automatically sets MLFLOW_TRACKING_URI and credentials
-            dagshub.init(repo_owner='jfarrell8', repo_name='regime_forecasting', mlflow=True)
+            self.start_mlflow_server()
+            mlflow.set_tracking_uri("http://localhost:5000")
+            mlflow.set_experiment("regime_forecasting")
 
             with mlflow.start_run(run_name=model_name):
                 # Log metrics
@@ -46,16 +67,9 @@ class RegimeModelForecasting:
                 mlflow.log_metric("recall", classificationmetric.recall_score)
                 mlflow.log_metric("accuracy", classificationmetric.accuracy_score)
 
-                # Log parameters (if available)
-                if hasattr(best_model, "get_params"):
-                    mlflow.log_params(best_model.get_params())
+                # mlflow.log_artifact(best_model)
+                mlflow.sklearn.log_model(best_model, "model", registered_model_name=model_name)
 
-                # Log and (optionally) register model
-                mlflow.sklearn.log_model(
-                    sk_model=best_model,
-                    artifact_path="model",
-                    registered_model_name=model_name
-                )
 
         except Exception as e:
             raise RegimeForecastingException(e, sys)
@@ -121,6 +135,7 @@ class RegimeModelForecasting:
                 search.fit(X_train, y_train)
 
                 model.set_params(**search.best_params_)
+                model.fit(X_train, y_train)
                 
                 y_train_pred = model.predict(X_train)
 
@@ -207,7 +222,7 @@ class RegimeModelForecasting:
 
         ## Model Trainer Artifact
         model_trainer_artifact = RegimeModelForecastingArtifact(
-                            trained_model_file_path=self.regime_model_forecasting_config.regime_forecasting_data_path,
+                            regime_forecasting_file_path=self.regime_model_forecasting_config.regime_forecasting_data_path,
                             train_metric_artifact=classification_train_metric,
                             test_metric_artifact=classification_test_metric
                              )
@@ -231,6 +246,8 @@ class RegimeModelForecasting:
             y_train, y_test = y[y.index < split_date], y[y.index >= split_date]
 
             model_trainer_artifact = self.train_model(X_train, y_train, X_test, y_test)
+
+            self.shutdown_mlflow_server()
 
             return model_trainer_artifact
             
