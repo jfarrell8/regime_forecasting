@@ -7,6 +7,7 @@ from src.exception.exception import RegimeForecastingException
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
+import os
 
 
 class Clustering:
@@ -42,13 +43,39 @@ class Clustering:
 
             # cluster into n regimes
             n_clusters, _ = self.select_best_k(X=X_scaled)
+
+            # save best num of clusters
+            with open(os.path.join(self.clustering_config.clustering_dir, 'num_clusters.txt'), "w") as f:
+                f.write(str(n_clusters))
+
             kmeans = KMeans(n_clusters=n_clusters, random_state=42)
             features['regime'] = kmeans.fit_predict(X_scaled)
 
             # combine with original data
             self.data = self.data.merge(features['regime'], left_index=True, right_index=True)
 
-            self.data.to_csv(self.clustering_config.regimes_data_path)
+            # send clustering data to artifacts/
+            self.data.to_csv(self.clustering_config.regimes_data_path, index=False)
+
+            # compileand send regime stats to artifacts/
+            regime_stats = self.data.groupby('regime').agg({
+                'SP500_ret': ['mean', 'std'],
+                'SP500_vol_21d': 'mean',
+                '^VIX': 'mean'
+            }).rename(columns={
+                'SP500_ret': 'Return',
+                'SP500_vol_21d': 'Volatility (21d)',
+                '^VIX': 'VIX Level'
+            })
+
+            # Flatten multi-index columns
+            regime_stats.columns = ['_'.join(col).strip() for col in regime_stats.columns.values]
+            regime_stats = regime_stats.reset_index()
+
+            # Rename columns for clarity
+            regime_stats.columns = ['Regime', 'Mean Return', 'Return Std Dev', 'Mean Volatility (21d)', 'Mean VIX Level']
+
+            regime_stats.to_csv(self.clustering_config.regimes_stats_data_path, index=False)
         
         except Exception as e:
             raise RegimeForecastingException(e, sys)

@@ -13,5 +13,7 @@ plotly
 dash
 ta
 dagshub
+dash
+dash-bootstrap-components
 
 ##-e .

@@ -28,7 +28,7 @@ class FeatureEngineering:
         try:
             logging.info('Saving processed data locally...')
 
-            data.to_csv(self.feature_engineering_config.feature_eng_data_path)
+            data.to_csv(self.feature_engineering_config.feature_eng_data_path, index=False)
 
             logging.info('Processed data saved successfully!')
         

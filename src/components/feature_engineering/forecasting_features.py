@@ -26,7 +26,4 @@ class ForecastingFeatureTransformer(BaseEstimator, TransformerMixin):
         bb = ta.volatility.BollingerBands(X['^GSPC'], window=20, window_dev=2)
         X['bb_width'] = bb.bollinger_hband() - bb.bollinger_lband()
 
-        if 'regime' in X.columns:
-            X['regime_t'] = X['regime'].shift(1)
-
         return X.dropna()

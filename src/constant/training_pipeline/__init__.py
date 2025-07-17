@@ -40,6 +40,7 @@ Clustering related constants
 
 CLUSTERING_DIR_NAME: str = "clustering"
 REGIMES_FILE_NAME: str = "regimes.csv"
+REGIME_STATS_FILE_NAME: str = "regime_stats.csv"
 
 
 """

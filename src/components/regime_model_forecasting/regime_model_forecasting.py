@@ -104,9 +104,6 @@ class RegimeModelForecasting:
         bb = ta.volatility.BollingerBands(data['^GSPC'], window=20, window_dev=2)
         data['bb_width'] = bb.bollinger_hband() - bb.bollinger_lband()
 
-        # current  regime
-        data['regime_t'] = data['regime'].shift(1)
-
         data = data.dropna()
 
         return data    
@@ -180,8 +177,8 @@ class RegimeModelForecasting:
             },
             "Random Forest": {
                 # 'criterion': ['gini', 'entropy', 'log_loss'],
-                # 'max_features': ['sqrt', 'log2', None],
-                'n_estimators': [8, 16, 32, 128, 256]
+                'max_features': ['sqrt', 'log2', None],
+                # 'n_estimators': [8, 16, 32, 128, 256]
             },
             "Logistic Regression": {
                 'logreg__multi_class': ['multinomial'],

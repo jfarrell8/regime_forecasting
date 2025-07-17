@@ -20,7 +20,8 @@ class DataIngestion:
         try:
             logging.info('Downloading price data from Yahoo...')
             
-            data = MarketDataLoader(tickers=["^GSPC", "^VIX"], start="2015-01-01")
+            dataloader = MarketDataLoader(tickers=["^GSPC", "^VIX"], start="2015-01-01")
+            data = dataloader.load()
 
             logging.info('Price data succesfully downloaded.')
 
