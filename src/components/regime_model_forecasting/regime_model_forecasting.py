@@ -229,12 +229,19 @@ class RegimeModelForecasting:
             data = data.dropna(subset=['next_regime'])  # Drop last row
 
             data = self.add_features(data)
+
             X = data.drop(['regime', 'next_regime'], axis=1)
             y = data['next_regime']
 
             split_date = '2020-01-01'
             X_train, X_test = X[X.index < split_date], X[X.index >= split_date]
             y_train, y_test = y[y.index < split_date], y[y.index >= split_date]
+
+            # get naive benchmark data
+            y_naive = data['regime'].loc[y_test.index]  # today’s regime = tomorrow's prediction
+            y_naive.to_csv(self.regime_model_forecasting_config.naive_baseline_data_path, index=False)
+
+            y_test.to_csv(self.regime_model_forecasting_config.naive_baseline_ytest_data_path, index=False)
 
             model_trainer_artifact = self.train_model(X_train, y_train, X_test, y_test)
 

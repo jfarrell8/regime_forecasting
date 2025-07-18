@@ -19,6 +19,11 @@ def load_cluster_data():
         n_clusters = int(f.read())
     return df, stats, n_clusters
 
+def load_naive_data():
+    naive_pred = pd.read_csv("artifacts/regime_model_forecasting/naive_forecasting.csv")
+    naive_test = pd.read_csv("artifacts/regime_model_forecasting/naive_ytest.csv")
+
+    return naive_pred, naive_test
 
 # --- Generate Silhouette plots with Yellowbrick (matplotlib)
 def generate_yellowbrick_silhouette_image(data, k_vals=[2, 3, 4, 5]):

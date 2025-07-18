@@ -3,8 +3,13 @@ from dash import html, dcc, Output, Input, State
 import dash_bootstrap_components as dbc
 import datetime
 from inference.predictor import RegimePredictor
+from src.utils.dash_utils import load_cluster_data, load_naive_data
 
 dash.register_page(__name__, path='/prediction', name="Prediction")
+
+df, regime_stats, n_clusters = load_cluster_data()
+naive_pred, naive_test = load_naive_data()
+
 
 # Predictor instance
 predictor = RegimePredictor()

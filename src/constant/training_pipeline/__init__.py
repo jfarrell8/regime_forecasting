@@ -49,3 +49,5 @@ Regime model forecasting constants
 
 REGIME_MODEL_FORECASTING_DIR_NAME: str = "regime_model_forecasting"
 REGIME_MODEL_FORECASTING_FILE_NAME: str = "regime_forecasting.csv"
+NAIVE_BASELINE_FILE_NAME: str = "naive_forecasting.csv"
+NAIVE_BASELINE_YTEST_FILE_NAME: str = "naive_ytest.csv"

@@ -80,3 +80,7 @@ class RegimeModelForecastingConfig:
 
         # ./artifacts/{timestamp}/regime_model_forecasting/regime_forecasting.csv
         self.regime_forecasting_data_path = os.path.join(self.regime_model_forecasting_dir, training_pipeline.REGIME_MODEL_FORECASTING_FILE_NAME)
+
+        # ./artifacts/regime_model_forecasting/naive_baseline.csv
+        self.naive_baseline_data_path = os.path.join(self.regime_model_forecasting_dir, training_pipeline.NAIVE_BASELINE_FILE_NAME)
+        self.naive_baseline_ytest_data_path = os.path.join(self.regime_model_forecasting_dir, training_pipeline.NAIVE_BASELINE_YTEST_FILE_NAME)
