@@ -11,6 +11,7 @@ import io
 import base64
 from itertools import combinations
 from scipy.stats import ttest_ind
+import json
 
 def load_cluster_data():
     df = pd.read_csv("artifacts/clustering/regimes.csv", index_col="Date", parse_dates=True)
@@ -24,6 +25,17 @@ def load_naive_data():
     naive_test = pd.read_csv("artifacts/regime_model_forecasting/naive_ytest.csv")
 
     return naive_pred, naive_test
+
+
+def load_forecasting_metrics():
+    with open('artifacts/regime_model_forecasting/best_model_metrics.json') as f:
+        forecast_metrics = json.load(f)
+
+    with open('artifacts/regime_model_forecasting/naive_metrics.json') as f:
+        naive_metrics = json.load(f)
+
+    return forecast_metrics, naive_metrics
+
 
 # --- Generate Silhouette plots with Yellowbrick (matplotlib)
 def generate_yellowbrick_silhouette_image(data, k_vals=[2, 3, 4, 5]):

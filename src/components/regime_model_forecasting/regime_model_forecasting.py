@@ -24,6 +24,7 @@ import atexit
 import socket
 from sklearn.model_selection import ParameterSampler
 from copy import deepcopy
+import json
 
 
 
@@ -202,14 +203,23 @@ class RegimeModelForecasting:
 
         final_metrics = {
             "train_f1_score": train_metric.f1_score,
+            "train_accuracy": train_metric.accuracy_score,
+            "train_recall": train_metric.recall_score,
+            "train_precision": train_metric.precision_score,
             "test_f1_score": test_metric.f1_score,
-            "test_accuracy": test_metric.accuracy_score
+            "test_accuracy": test_metric.accuracy_score,
+            "test_recall": test_metric.recall_score,
+            "test_precision": test_metric.precision_score
         }
 
         # Track and register best model
         self.track_mlflow(best_model, final_metrics, best_params, f"{best_model_name}_final", register=True)
 
-        # Save locally
+        # save metrics locally
+        with open(os.path.join(self.regime_model_forecasting_config.regime_model_forecasting_dir, 'best_model_metrics.json'), 'w') as f:
+            json.dump(final_metrics, f, indent=4)
+
+        # Save model locally
         save_object(self.regime_model_forecasting_config.regime_forecasting_data_path, best_model)
         deployment_model_path = os.path.join("final_model", "model.pkl")
         os.makedirs(os.path.dirname(deployment_model_path), exist_ok=True)
@@ -240,8 +250,20 @@ class RegimeModelForecasting:
             # get naive benchmark data
             y_naive = data['regime'].loc[y_test.index]  # today’s regime = tomorrow's prediction
             y_naive.to_csv(self.regime_model_forecasting_config.naive_baseline_data_path, index=False)
-
             y_test.to_csv(self.regime_model_forecasting_config.naive_baseline_ytest_data_path, index=False)
+
+            # save metrics for naive
+            naive_test_metrics = get_classification_score(y_naive, y_test)
+            naive_metrics = {
+                "f1-score": naive_test_metrics.f1_score,
+                "accuracy": naive_test_metrics.accuracy_score,
+                "precision": naive_test_metrics.precision_score,
+                "recall": naive_test_metrics.recall_score
+            }
+
+            # save metrics locally
+            with open(os.path.join(self.regime_model_forecasting_config.regime_model_forecasting_dir, 'naive_metrics.json'), 'w') as f:
+                json.dump(naive_metrics, f, indent=4)            
 
             model_trainer_artifact = self.train_model(X_train, y_train, X_test, y_test)
 

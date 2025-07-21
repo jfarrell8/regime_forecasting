@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: regime-dash
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python dash_app/app.py
