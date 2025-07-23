@@ -15,5 +15,11 @@ ta
 dagshub
 dash
 dash-bootstrap-components
+prometheus-client
+prometheus-fastapi-instrumentator
+uvicorn
+pydantic
+joblib
+mlflow
 
 ##-e .

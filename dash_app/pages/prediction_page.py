@@ -5,7 +5,7 @@ import datetime
 from inference.predictor import RegimePredictor
 from src.utils.dash_utils import load_cluster_data, load_naive_data, load_forecasting_metrics
 
-dash.register_page(__name__, path='/prediction', name="Prediction")
+dash.register_page(__name__, path='/prediction_page', name="Prediction")
 
 df, regime_stats, n_clusters = load_cluster_data()
 naive_pred, naive_test = load_naive_data()

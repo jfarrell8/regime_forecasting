@@ -1,0 +1,119 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "FastAPI Monitoring Dashboard",
+    "timezone": "browser",
+    "schemaVersion": 37,
+    "version": 1,
+    "refresh": "15s",
+    "panels": [
+      {
+        "title": "Total HTTP Requests",
+        "type": "stat",
+        "id": 1,
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "sum(http_requests_total)",
+            "legendFormat": "",
+            "interval": ""
+          }
+        ]
+      },
+      {
+        "title": "HTTP Request Duration (avg)",
+        "type": "gauge",
+        "id": 2,
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "rate(http_request_duration_seconds_sum[1m]) / rate(http_request_duration_seconds_count[1m])",
+            "legendFormat": ""
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s"
+          }
+        }
+      },
+      {
+        "title": "HTTP Status Codes",
+        "type": "bargauge",
+        "id": 3,
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "sum by (status) (http_requests_total)",
+            "legendFormat": "Status: {{status}}"
+          }
+        ]
+      },
+      {
+        "title": "App Health (Up)",
+        "type": "stat",
+        "id": 4,
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "up{job=\"fastapi-app\"}",
+            "legendFormat": ""
+          }
+        ]
+      },
+      {
+        "title": "Prediction Requests",
+        "type": "stat",
+        "id": 5,
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "prediction_requests_total",
+            "legendFormat": ""
+          }
+        ]
+      },
+      {
+        "title": "Inference Latency (avg)",
+        "type": "gauge",
+        "id": 6,
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "rate(inference_latency_seconds_sum[1m]) / rate(inference_latency_seconds_count[1m])",
+            "legendFormat": ""
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s"
+          }
+        }
+      },
+      {
+        "title": "HTTP Requests by Route",
+        "type": "table",
+        "id": 7,
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "sum by (path) (http_requests_total)",
+            "legendFormat": "{{path}}"
+          }
+        ]
+      },
+      {
+        "title": "Request Duration by Endpoint",
+        "type": "heatmap",
+        "id": 8,
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[1m])) by (le, path))",
+            "legendFormat": "{{path}}"
+          }
+        ]
+      }
+    ]
+  }
+}
