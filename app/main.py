@@ -3,6 +3,8 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from inference.predictor import RegimePredictor
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 from fastapi.responses import Response
+from fastapi.middleware.wsgi import WSGIMiddleware
+from dash_app.app import app as dash_app
 import logging
 
 # set up logging
@@ -15,6 +17,9 @@ app = FastAPI(
     description="Predicts next-day market regime using pre-trained model",
     version="1.0.0"
 )
+
+# Mount the Dash app at /dash
+app.mount("/dash", WSGIMiddleware(dash_app.server))
 
 # # Attach Prometheus instrumentation
 # Instrumentator().instrument(app).expose(app) # collects basic http metrics (request count, request duration, response codes, etc.)
@@ -50,8 +55,15 @@ except Exception as e:
 
 # root
 @app.get("/", tags=["info"])
-def root():
-    return {"message": "Welcome to the Market Regime Forecasting API. Visit /docs for Swagger UI."}
+# def root():
+#     return {"message": "Welcome to the Market Regime Forecasting API. Visit /docs for Swagger UI."}
+def read_root():
+    return {
+        "message": "Welcome to the Regime Forecasting API. Visit /docs for Swagger UI.",
+        "dash_app": "/dash",
+        "predict": "/predict",
+        "metrics": "/metrics"
+    }
 
 
 # Explicit metrics endpoint (backup)

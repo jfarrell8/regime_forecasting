@@ -3,7 +3,10 @@ from dash import Dash, html, page_registry
 from dash_bootstrap_components.themes import BOOTSTRAP
 import dash_bootstrap_components as dbc
 
-app = Dash(__name__, use_pages=True, external_stylesheets=[BOOTSTRAP], suppress_callback_exceptions=True)
+app = Dash(__name__, use_pages=True, 
+           external_stylesheets=[BOOTSTRAP], 
+           suppress_callback_exceptions=True,
+           requests_pathname_prefix="/dash/")
 app.title = "Market Regime App"
 
 
@@ -13,7 +16,7 @@ sidebar = html.Div(
         html.Hr(),
         dbc.Nav(
             [
-                dbc.NavLink(page["name"], href=page["path"], active="exact")
+                dbc.NavLink(page["name"], href=f"/dash{page['path']}", active="exact")
                 for page in page_registry.values()
             ],
             vertical=True,
@@ -33,7 +36,7 @@ app.layout = dbc.Container(
     fluid=True
 )
 
-# server = app.server  # for gunicorn deployment
+server = app.server  # for gunicorn deployment
 
-if __name__ == '__main__':
-    app.run(debug=True)
+# if __name__ == '__main__':
+#     app.run(debug=True)

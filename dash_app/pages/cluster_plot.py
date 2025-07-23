@@ -10,7 +10,7 @@ from src.utils.dash_utils import (load_cluster_data, confidence_interval_plot,
                                     generate_yellowbrick_silhouette_image, compute_regime_ttests)
 
 # Register page
-dash.register_page(__name__, path="/clustering", name="Regime Clustering")
+dash.register_page(__name__, path="/", name="Regime Clustering")
 
 # Load some data once at app start
 df, regime_stats, n_clusters = load_cluster_data()
