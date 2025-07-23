@@ -3,5 +3,4 @@ logs/
 .env
 mlartifacts/
 mlruns/
-artifacts/
 prometheus.yml
