@@ -39,6 +39,7 @@ The pipeline is production-grade, with:
 ---
 
 ## Project Structure
+```bash
 regime_forecasting/
 ├── app/ # FastAPI model API with Prometheus metrics
 │ ├── main.py
@@ -60,6 +61,7 @@ regime_forecasting/
 ├── src/ # Codebase to execute data pipline, clustering, ML forecasting HPO, and evaluation
 ├── requirements.txt
 └── docker-compose.yml # Start Prometheus & Grafana stack
+```
 
 ## Running The ML Training Pipeline Locally
 ```powershell
