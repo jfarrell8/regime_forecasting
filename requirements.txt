@@ -18,6 +18,7 @@ dash-bootstrap-components
 prometheus-client
 prometheus-fastapi-instrumentator
 uvicorn
+gunicorn
 pydantic
 joblib
 mlflow
